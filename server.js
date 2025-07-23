@@ -6,34 +6,50 @@ require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 5000;
 
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 app.use(express.json());
 
-// Sign up a new client, return their unique snippet
+// Sign up a new client and return their unique snippet
 app.post("/api/signup", async (req, res) => {
   const { name, email } = req.body;
   const clientId = uuidv4();
-  const { error } = await supabase.from("clients").insert([{ name, email, client_id: clientId }]);
+  const { error } = await supabase
+    .from("clients")
+    .insert([{ name, email, client_id: clientId }]);
   if (error) return res.status(500).json({ error: error.message });
   return res.json({
     clientId,
-    snippet: `<script src="https://your-backend.com/snippet/${clientId}.js"></script>`
+    snippet: `<script src="https://framtt-backend.onrender.com/snippet/${clientId}.js"></script>`,
   });
 });
 
 // Receive bookings from snippets
 app.post("/api/bookings", async (req, res) => {
   const { clientId, name, phone, vehicle, startDate, endDate } = req.body;
-  if (!clientId) return res.status(400).json({ error: "clientId required" });
-  const { error } = await supabase.from("bookings").insert([
-    { client_id: clientId, name, phone, vehicle, start_date: startDate, end_date: endDate }
-  ]);
+  if (!clientId)
+    return res.status(400).json({ error: "clientId required" });
+
+  const { error } = await supabase
+    .from("bookings")
+    .insert([
+      {
+        client_id: clientId,
+        name,
+        phone,
+        vehicle,
+        start_date: startDate,
+        end_date: endDate,
+      },
+    ]);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ message: "Booking saved!" });
 });
 
 // Serve the client-specific snippet
-app.get('/snippet/:clientId.js', (req, res) => {
+app.get("/snippet/:clientId.js", (req, res) => {
   const { clientId } = req.params;
   const snippet = `
     (function(){
@@ -43,7 +59,7 @@ app.get('/snippet/:clientId.js', (req, res) => {
         if(!form) return;
         form.addEventListener("submit", function(){
           var fd = new FormData(form);
-          fetch("https://your-backend.com/api/bookings", {
+          fetch("https://framtt-backend.onrender.com/api/bookings", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({
@@ -63,4 +79,6 @@ app.get('/snippet/:clientId.js', (req, res) => {
   res.send(snippet);
 });
 
-app.listen(port, () => console.log(`Server running on port ${port}`));
+app.listen(port, () =>
+  console.log(`Server running on port ${port}`)
+);
