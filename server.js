@@ -65,6 +65,7 @@ app.post("/api/bookings", async (req, res) => {
     }
   ]);
   if (error) {
+    console.log("Supabase insert error:", error.message);
     return res.status(500).json({ error: error.message });
   }
   res.json({ message: "Booking saved!" });
